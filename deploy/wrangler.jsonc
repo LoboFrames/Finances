@@ -1,9 +1,0 @@
-{
-  // Static-only Worker: no main script, just assets.
-  // Deployed with `npx wrangler deploy` from this directory.
-  "name": "safe-to-spend",
-  "compatibility_date": "2026-08-20",
-  "assets": {
-    "directory": "./public"
-  }
-}
