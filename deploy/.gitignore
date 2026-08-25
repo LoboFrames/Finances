@@ -1,0 +1,9 @@
+# Never commit secrets or local Cloudflare state
+.dev.vars
+.wrangler/
+node_modules/
+
+# Data backups exported from the app contain full financial history --
+# transactions, payroll figures, receipt images. Keep them off GitHub.
+*backup*.json
+data/

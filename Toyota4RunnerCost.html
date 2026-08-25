@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>4Runner Loan Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>(function(){try{var t=localStorage.getItem('4runner-theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
+<style>
+:root{--bg:#f6f7f9;--card:#ffffff;--card2:#f1f3f6;--line:#e3e6eb;--tx:#1a1f26;--mut:#6b7280;
+--red:#D10A1E;--grn:#1a7f37;--amb:#9a6700;--blu:#0969da;--pur:#8250df;
+--hero-grad:linear-gradient(135deg,#fff5f5,#ffffff);--badge-bg:rgba(26,127,55,.08);--badge-border:rgba(26,127,55,.3);
+--hover-border:#c4cad4;--scrollbar:#c4cad4;--seg-gray:#6b7280;--seg-text:#12100c;color-scheme:light}
+html[data-theme="dark"]{--bg:#0d1117;--card:#161b22;--card2:#1c2430;--line:#2a3240;--tx:#e6edf3;--mut:#8b949e;
+--red:#EB0A1E;--grn:#2ea043;--amb:#d29922;--blu:#58a6ff;--pur:#a371f7;
+--hero-grad:linear-gradient(135deg,#1c1013,#161b22);--badge-bg:rgba(46,160,67,.13);--badge-border:rgba(46,160,67,.35);
+--hover-border:#3d4756;--scrollbar:#2a3240;--seg-gray:#8b949e;--seg-text:#0d1117;color-scheme:dark}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg)}
+body{color:var(--tx);font:15px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;padding:28px;transition:background .2s,color .2s}
+.wrap{max-width:1280px;margin:0 auto}
+header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;
+border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:26px}
+h1{font-size:27px;font-weight:700;letter-spacing:-.5px}
+h1 span{color:var(--red)}
+.sub{color:var(--mut);font-size:13px;margin-top:5px}
+.badge{background:var(--badge-bg);color:var(--grn);border:1px solid var(--badge-border);
+padding:7px 15px;border-radius:99px;font-size:13px;font-weight:600}
+.themebtn{background:var(--card2);color:var(--tx);border:1px solid var(--line);padding:8px 14px;
+border-radius:99px;font-size:13px;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:7px;transition:.15s}
+.themebtn:hover{border-color:var(--hover-border)}
+.hdr-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:1.4px;color:var(--mut);margin:34px 0 14px;font-weight:600}
+.grid{display:grid;gap:14px}
+.g4{grid-template-columns:repeat(4,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:2fr 1fr}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;box-shadow:0 1px 3px rgba(16,24,40,.04)}
+.kpi .lab{font-size:11px;text-transform:uppercase;letter-spacing:.9px;color:var(--mut);font-weight:600}
+.kpi .val{font-size:30px;font-weight:700;letter-spacing:-1px;margin:7px 0 3px;font-variant-numeric:tabular-nums}
+.kpi .note{font-size:12px;color:var(--mut)}
+.hero{background:var(--hero-grad);border-color:rgba(209,10,30,.25)}
+.hero .val{color:var(--red)}
+.pos{color:var(--grn)}.warn{color:var(--amb)}.blu{color:var(--blu)}
+.chart{position:relative;height:290px}
+.chart.sm{height:230px}
+table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+th{text-align:right;padding:8px 10px;color:var(--mut);font-size:10.5px;text-transform:uppercase;
+letter-spacing:.7px;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+td{padding:7px 10px;border-bottom:1px solid var(--line)}
+tbody tr:hover{background:var(--card2)}
+tr.tot td{font-weight:700;border-top:2px solid var(--line);border-bottom:none;background:var(--card2)}
+.scroll{max-height:420px;overflow-y:auto}
+.scroll::-webkit-scrollbar{width:8px}.scroll::-webkit-scrollbar-thumb{background:var(--scrollbar);border-radius:4px}
+thead th{position:sticky;top:0;background:var(--card);z-index:2}
+.ctl{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+button{background:var(--card2);color:var(--mut);border:1px solid var(--line);padding:7px 15px;
+border-radius:7px;font-size:13px;cursor:pointer;font-weight:500;transition:.15s}
+button:hover{color:var(--tx);border-color:var(--hover-border)}
+button.on{background:var(--red);color:#fff;border-color:var(--red)}
+.ins{border-left:3px solid var(--blu);padding:14px 16px;background:var(--card);border-radius:0 10px 10px 0;
+border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+box-shadow:0 1px 3px rgba(16,24,40,.04)}
+.ins.g{border-left-color:var(--grn)}.ins.a{border-left-color:var(--amb)}.ins.p{border-left-color:var(--pur)}
+.ins h3{font-size:14px;font-weight:650;margin-bottom:5px}
+.ins p{font-size:13.5px;color:var(--mut);line-height:1.6}
+.ins b{color:var(--tx);font-weight:600}
+.bar{height:34px;display:flex;border-radius:8px;overflow:hidden;margin:12px 0 8px;font-size:11px;font-weight:700}
+.bar div{display:flex;align-items:center;justify-content:center;color:#fff;white-space:nowrap}
+.lg{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--mut)}
+.lg i{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:6px}
+.rows div{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.rows div:last-child{border:none}
+.rows span:first-child{color:var(--mut)}
+.rows span:last-child{font-variant-numeric:tabular-nums;font-weight:600}
+.rows div.hl{border-top:1px solid var(--line);margin-top:4px;padding-top:10px}
+.rows div.hl span{color:var(--tx);font-weight:700}
+footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);color:var(--mut);font-size:11.5px;line-height:1.7}
+@media(max-width:980px){.g4,.g3,.g2{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.g4,.g3,.g2{grid-template-columns:1fr}body{padding:16px}}
+</style></head><body><div class="wrap">
+
+<header>
+<div><h1>2021 <span>Toyota 4Runner</span> TRD Off-Road Premium</h1>
+<div class="sub">Antioch Toyota &middot; Financed 06/03/2021 &middot; Toyota Financial Services acct 003&nbsp;7066929 &middot; VIN &hellip;M5936646</div></div>
+<div class="hdr-actions">
+<div class="badge">&#10003; Paid in full &mdash; Mar 17, 2026</div>
+<button class="themebtn" id="themeToggle" onclick="toggleTheme()">&#9789; <span id="themeLabel">Dark mode</span></button>
+</div>
+</header>
+
+<h2>The bottom line</h2>
+<div class="grid g4">
+<div class="card kpi hero"><div class="lab">Total spent on the truck</div><div class="val">$61,232.66</div>
+<div class="note">$4,000 down + $57,232.66 in payments</div></div>
+<div class="card kpi"><div class="lab">Interest paid</div><div class="val warn">$7,596.21</div>
+<div class="note">15.3% on top of what you financed</div></div>
+<div class="card kpi"><div class="lab">Principal paid</div><div class="val">$49,636.45</div>
+<div class="note">Amount financed, retired in full</div></div>
+<div class="card kpi"><div class="lab">Saved by paying early</div><div class="val pos">$472.94</div>
+<div class="note">Closed 3 months before maturity</div></div>
+</div>
+
+<div class="card" style="margin-top:14px">
+<div style="font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;font-weight:600">Where every dollar went</div>
+<div class="bar">
+<div style="width:6.53%;background:var(--seg-gray)">$4,000</div>
+<div style="width:81.06%;background:var(--red)">$49,636.45 principal</div>
+<div style="width:12.41%;background:var(--amb);color:var(--seg-text)">$7,596.21</div>
+</div>
+<div class="lg"><span><i style="background:var(--seg-gray)"></i>Down payment 6.5%</span>
+<span><i style="background:var(--red)"></i>Principal 81.1%</span>
+<span><i style="background:var(--amb)"></i>Interest 12.4%</span></div>
+</div>
+
+<h2>Balance &amp; payment history</h2>
+<div class="ctl">
+<button class="on" data-v="bal">Loan balance</button>
+<button data-v="split">Interest vs principal</button>
+<button data-v="cum">Cumulative spend</button>
+<button data-v="year">By year</button>
+</div>
+<div class="card"><div class="chart" id="wrapMain"><canvas id="main"></canvas></div></div>
+
+<div class="grid g2" style="margin-top:14px">
+<div class="card"><div class="chart sm"><canvas id="mix"></canvas></div></div>
+<div class="card">
+<div style="font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:10px">Deal sheet</div>
+<div class="rows">
+<div><span>Vehicle cash price</span><span>$48,643.00</span></div>
+<div><span>Doc processing fee</span><span>$85.00</span></div>
+<div><span>Sales tax (8.75%)</span><span>$4,263.70</span></div>
+<div><span>Electronic reg. transfer</span><span>$30.00</span></div>
+<div><span>License &middot; title &middot; tire fees</span><span>$614.75</span></div>
+<div class="hl"><span>Out-the-door price</span><span>$53,636.45</span></div>
+<div><span>Less down payment</span><span>&minus;$4,000.00</span></div>
+<div class="hl"><span>Amount financed</span><span>$49,636.45</span></div>
+<div><span>APR</span><span>5.99%</span></div>
+<div><span>Scheduled term</span><span>60 &times; $961.76</span></div>
+<div><span>You actually paid</span><span>58 &times; ~$1,000</span></div>
+</div></div>
+</div>
+
+<h2>MSRP, markup &amp; add-ons check <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--grn)">&mdash; updated with Toyota build sheet + window sticker</span></h2>
+<div class="grid g3">
+<div class="card">
+<div style="font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:4px">Real factory options (Toyota Vehicle Spec report)</div>
+<div style="font-size:13.5px;color:var(--mut);margin-bottom:12px">Pulled directly from Toyota's own build record for VIN &hellip;M5936646 &mdash; this replaces the earlier rough estimate with your vehicle's actual factory/port-installed equipment.</div>
+<div class="rows">
+<div><span>KDSS &mdash; Kinetic Dynamic Suspension</span><span>+$1,750</span></div>
+<div><span>Power moonroof w/sunshade</span><span>+$630</span></div>
+<div><span>Running boards</span><span>+$345&ndash;$599</span></div>
+<div><span>All-weather floor liners (port)</span><span>+$169</span></div>
+<div><span>Preferred Owner's Portfolio (port)</span><span>~$0&ndash;low cost</span></div>
+<div><span>50-state emissions</span><span>$0 (standard)</span></div>
+<div class="hl"><span>Real options subtotal</span><span>~$2,894&ndash;$3,148</span></div>
+</div>
+<p style="font-size:12px;color:var(--mut);margin-top:10px;line-height:1.6">"Off Road Package" and "Premium Package" on the build sheet just describe the TRD Off-Road Premium trim itself &mdash; already included in its base MSRP, not extra charges. "Keep It Wild Savings" looks like a manufacturer incentive, which would only shrink the gap further.</p>
+</div>
+<div class="card">
+<div style="font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:10px">Recalculated: fully-optioned sticker vs. what you paid</div>
+<div class="bar" style="height:40px">
+<div style="width:95.4%;background:var(--seg-gray)">Fully-optioned sticker ~$46.4&ndash;46.6k</div>
+<div style="width:4.6%;background:var(--amb);color:var(--seg-text)"></div>
+</div>
+<div class="lg" style="margin-bottom:14px"><span><i style="background:var(--seg-gray)"></i>Base sticker + real options</span><span><i style="background:var(--amb)"></i>Remaining gap</span></div>
+<div class="rows">
+<div><span>Base trim sticker, incl. destination</span><span>$43,475.00</span></div>
+<div><span>&nbsp;&nbsp;&mdash; of which destination charge</span><span>$1,175.00</span></div>
+<div><span>&nbsp;&nbsp;&mdash; dealer invoice (for reference)</span><span>$40,127.00</span></div>
+<div><span>+ real factory/port options (left)</span><span>+$2,894&ndash;$3,148</span></div>
+<div class="hl"><span>Fully-optioned sticker estimate</span><span>~$46,369&ndash;$46,623</span></div>
+<div><span>Your contract cash price</span><span>$48,643.00</span></div>
+<div class="hl"><span>Remaining unexplained gap</span><span class="warn">+$2,020&ndash;$2,274 (~4.4&ndash;4.9%)</span></div>
+</div>
+<p style="font-size:11.5px;color:var(--mut);margin-top:10px;line-height:1.6">Base price/destination/invoice sourced from a VIN-based sticker reproduction (not an original Toyota-printed Monroney label &mdash; it explicitly disclaims itself as a reconstruction and only lists generic standard equipment). Combined here with the real confirmed options from Toyota's own official spec report, which the reproduction's generic equipment list did not capture.</p>
+</div>
+<div class="card">
+<div style="font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:10px">Add-ons &amp; packages charged in financing</div>
+<div class="rows">
+<div><span>Theft deterrent device(s)</span><span class="pos">None &mdash; N/A</span></div>
+<div><span>Surface protection product</span><span class="pos">None &mdash; N/A</span></div>
+<div><span>Optional service contract(s)</span><span class="pos">None &mdash; N/A</span></div>
+<div><span>Debt cancellation agreement (GAP)</span><span class="pos">None &mdash; N/A</span></div>
+<div><span>"Market adjustment" / ADM line item</span><span class="pos">Not found</span></div>
+<div><span>DMV Certificate of Cost (REG 397)</span><span>$48,643.00, sworn</span></div>
+<div class="hl"><span>Only non-vehicle charge</span><span>$85 doc fee</span></div>
+</div>
+<p style="font-size:12px;color:var(--mut);margin-top:10px;line-height:1.6">No document in the 13-page deal file shows a separate market-adjustment line, and the dealer certified $48,643 as the vehicle cost under penalty of perjury on the DMV form &mdash; same figure as the contract.</p>
+</div>
+</div>
+<p style="font-size:13px;margin-top:10px;line-height:1.6"><b>Bottom line:</b> combining Toyota's own build sheet (real factory options: KDSS, moonroof, running boards, floor liners) with a VIN-based sticker reproduction (base trim $43,475 incl. destination, invoice $40,127), a realistic fully-optioned sticker lands around <b>$46,369&ndash;$46,623</b>. You paid <b>$48,643</b> &mdash; a gap of roughly <b class="warn">$2,020&ndash;$2,274 (about 4.4&ndash;4.9%)</b>. That's a real but modest premium: too small to be a slap-a-huge-ADM-sticker situation, but large enough to plausibly be a small dealer market adjustment or just normal negotiating room, especially given June 2021's inventory shortage. Not the $3,400+ gap first estimated from bare-trim pricing alone, but not zero either. The one document that would settle it to the exact dollar is the original Toyota-printed Monroney label from Antioch Toyota or TFS, Deal ID 151553 &mdash; this reproduction explicitly isn't that.</p>
+
+<h2>Year by year</h2>
+<div class="card"><table><thead><tr><th>Year</th><th>Payments</th><th>Total paid</th><th>Interest</th><th>Principal</th><th>Interest share</th></tr></thead>
+<tbody id="ytb"></tbody></table></div>
+
+<h2>Insights</h2>
+<div class="grid g3">
+<div class="ins g"><h3>Your $38.24/month overpayment worked</h3>
+<p>You paid <b>$1,000</b> against a <b>$961.76</b> scheduled payment &mdash; an extra <b>$2,141</b> across the loan. That retired the note on <b>Mar 17, 2026</b> instead of Jun 18, 2026 and cut <b>$472.94</b> of interest. Effective return on that extra cash: roughly the 5.99% APR, tax-free.</p></div>
+
+<div class="ins a"><h3>The down payment was the weak spot</h3>
+<p>$4,000 covered only <b>7.5%</b> of the $53,636 out-the-door price. At 5.99% over 60 months, every extra $1,000 down would have saved about <b>$160</b> in interest. A 20% down payment ($10,727) would have cut roughly <b>$1,080</b> of interest and started you with real equity instead of near-certain negative equity in year one.</p></div>
+
+<div class="ins"><h3>Interest front-loads hard</h3>
+<p><b>74%</b> of all interest ($5,634) was paid in the first half of the loan. Your very first payment was <b>$317.69 interest / $682.31 principal</b>; your last full $1,000 payment was <b>$11.26 / $988.74</b>. This is why extra principal early is worth several times more than extra principal late.</p></div>
+
+<div class="ins p"><h3>Taxes and fees added $4,993</h3>
+<p>Sales tax ($4,263.70), doc fee ($85), and DMV/title/tire fees ($644.75) added <b>10.3%</b> on top of the $48,643 sticker &mdash; and since they were rolled into the financing, you paid <b>~$764</b> in interest on the fees alone.</p></div>
+
+<div class="ins g"><h3>A clean 58-for-58 payment record</h3>
+<p>Zero late charges, zero past-due amounts, and no missed payments across <b>57 months</b> of statements. Every payment landed on the 7th, well ahead of the 18th due date. That is exactly the tradeline that drives an auto-loan score.</p></div>
+
+<div class="ins p"><h3>A real but modest markup, best evidence says</h3>
+<p>You paid <b>$48,643</b>. Once real factory options (KDSS, moonroof, running boards) confirmed by Toyota's own build sheet are priced onto the $43,475 base sticker, a fully-loaded truck should have run <b>~$46,369&ndash;$46,623</b> &mdash; leaving a gap of <b>$2,020&ndash;$2,274 (~4.5%)</b>. No document itemizes it as a "market adjustment"; the dealer certified the same $48,643 as vehicle cost <b>under penalty of perjury</b> on the DMV registration. See the MSRP section above for the full paper trail.</p></div>
+
+<div class="ins a"><h3>True cost of ownership, loan only</h3>
+<p>$61,232.66 over 57 months is <b>$1,074/month</b> in capital cost &mdash; before insurance, fuel, registration renewals, tires, or maintenance. Budget realistically: those typically add $350&ndash;$550/month for a 4Runner in Sacramento.</p></div>
+</div>
+
+<h2>What to do next</h2>
+<div class="grid g3">
+<div class="ins"><h3>1 &middot; Chase the title</h3>
+<p>California is an ELT state &mdash; TFS releases the lien electronically and the DMV mails the clear title in about <b>15&ndash;30 days</b>. If it hasn't arrived by <b>mid-August 2026</b>, call TFS at (800) 874-8822 and request a lien release letter, then file a duplicate title (REG&nbsp;227) with the DMV.</p></div>
+
+<div class="ins"><h3>2 &middot; Get it in writing</h3>
+<p>Request a <b>paid-in-full letter</b> from TFS and save it with the contract. Then check your credit report in 30&ndash;60 days: the account should read <b>"Closed &mdash; Paid as agreed, $0 balance."</b> That $7.44 final payment on Mar 17 was residual per-diem interest &mdash; confirm nothing is still sitting open.</p></div>
+
+<div class="ins"><h3>3 &middot; Re-shop insurance</h3>
+<p>With no lienholder, you're no longer contractually required to carry comprehensive and collision. On a 2021 4Runner it's still worth keeping &mdash; they hold value unusually well &mdash; but you can now <b>raise deductibles</b> and drop any gap or lender-mandated coverage. Expect a meaningful premium cut.</p></div>
+
+<div class="ins g"><h3>4 &middot; Redirect the $1,000</h3>
+<p>Your budget is already trained for it. Keeping <b>$1,000/month</b> flowing &mdash; into a high-yield account, an IRA, or a sinking fund for the next vehicle &mdash; is worth <b>$12,000/year</b>. Peel off $150&ndash;$250 of it into a maintenance reserve; the 4Runner is at the age where timing-adjacent and suspension work starts showing up.</p></div>
+
+<div class="ins p"><h3>5 &middot; Consider it "free" for a while</h3>
+<p>A paid-off 4Runner at ~5 years old is close to the sweet spot: the steep depreciation is behind you and reliability is still ahead. Every additional year you keep it costs only running expenses. Trading now would restart the $61K cycle at today's rates.</p></div>
+
+<div class="ins a"><h3>6 &middot; If there is a next loan</h3>
+<p>Three levers, in order of impact: <b>20% down</b>, <b>48 months or less</b>, and a <b>credit-union pre-approval</b> in hand before you walk in. Also negotiate the doc fee and refuse to finance tax and DMV fees if you can pay them at signing &mdash; that alone saved you $764 this time around.</p></div>
+</div>
+
+<h2>Full payment ledger &mdash; all 58 payments</h2>
+<div class="card"><div class="scroll"><table>
+<thead><tr><th>#</th><th>Date</th><th>Days</th><th>Payment</th><th>Interest</th><th>Principal</th><th>Balance</th></tr></thead>
+<tbody id="ltb"></tbody></table></div></div>
+
+<footer>
+<b>Sources:</b> Retail Installment Sale Contract (Antioch Toyota, LAW 553-CA-ARB-ea, Deal 151553), 58 Toyota Financial Services monthly statements (06/2021&ndash;02/2026), and TFS transaction history exported 07/30/2026.<br>
+Interest is modeled on the contract's daily simple-finance-charge method at 5.99% APR using actual posting dates. The model reconciles to every statement's Outstanding Balance within <b>$0.01</b>. Not tax or financial advice.
+</footer>
+</div>
+
+<script>
+const D = {"vehicle": {"year": 2021, "model": "Toyota 4Runner TRD Off-Road Premium", "vin": "JTERU5JR0M5936646", "odo": 3, "condition": "New", "dealer": "Antioch Toyota, Antioch CA", "contract_date": "2021-06-03", "account": "003 7066929"}, "purchase": {"cash_price_vehicle": 48643.0, "doc_fee": 85.0, "sales_tax": 4263.7, "evr_fee": 30.0, "total_cash_price": 53021.7, "license_fee": 317.0, "reg_title_fee": 289.0, "tire_fee": 8.75, "official_fees": 614.75, "out_the_door": 53636.45, "down_payment": 4000.0, "amount_financed": 49636.45}, "loan": {"apr": 5.99, "term": 60, "scheduled_payment": 961.76, "first_due": "2021-07-18", "maturity": "2026-06-18", "scheduled_finance_charge": 8069.15, "scheduled_total_payments": 57705.6, "scheduled_total_sale_price": 61705.6}, "actual": {"n_payments": 58, "total_paid": 57232.66, "interest_paid": 7596.21, "principal_paid": 49636.45, "payoff_date": "2026-03-17", "months_early": 3, "interest_saved": 472.94, "total_out_of_pocket": 61232.66, "late_charges": 0.0, "past_due_events": 0}, "schedule": [{"date": "2021-07-12", "days": 39, "payment": 1000.0, "interest": 317.69, "principal": 682.31, "balance": 48954.14, "open_balance": 49636.45}, {"date": "2021-08-07", "days": 26, "payment": 1000.0, "interest": 208.88, "principal": 791.12, "balance": 48163.02, "open_balance": 48954.14}, {"date": "2021-09-07", "days": 31, "payment": 1000.0, "interest": 245.02, "principal": 754.98, "balance": 47408.04, "open_balance": 48163.02}, {"date": "2021-10-07", "days": 30, "payment": 1000.0, "interest": 233.4, "principal": 766.6, "balance": 46641.44, "open_balance": 47408.04}, {"date": "2021-11-07", "days": 31, "payment": 1000.0, "interest": 237.28, "principal": 762.72, "balance": 45878.73, "open_balance": 46641.44}, {"date": "2021-12-07", "days": 30, "payment": 1000.0, "interest": 225.87, "principal": 774.13, "balance": 45104.6, "open_balance": 45878.73}, {"date": "2022-01-07", "days": 31, "payment": 1000.0, "interest": 229.47, "principal": 770.53, "balance": 44334.07, "open_balance": 45104.6}, {"date": "2022-02-07", "days": 31, "payment": 1000.0, "interest": 225.55, "principal": 774.45, "balance": 43559.61, "open_balance": 44334.07}, {"date": "2022-03-07", "days": 28, "payment": 1000.0, "interest": 200.16, "principal": 799.84, "balance": 42759.77, "open_balance": 43559.61}, {"date": "2022-04-07", "days": 31, "payment": 1000.0, "interest": 217.54, "principal": 782.46, "balance": 41977.31, "open_balance": 42759.77}, {"date": "2022-05-07", "days": 30, "payment": 1000.0, "interest": 206.67, "principal": 793.33, "balance": 41183.97, "open_balance": 41977.31}, {"date": "2022-06-07", "days": 31, "payment": 1000.0, "interest": 209.52, "principal": 790.48, "balance": 40393.49, "open_balance": 41183.97}, {"date": "2022-07-07", "days": 30, "payment": 1000.0, "interest": 198.87, "principal": 801.13, "balance": 39592.36, "open_balance": 40393.49}, {"date": "2022-08-07", "days": 31, "payment": 1000.0, "interest": 201.42, "principal": 798.58, "balance": 38793.78, "open_balance": 39592.36}, {"date": "2022-09-07", "days": 31, "payment": 1000.0, "interest": 197.36, "principal": 802.64, "balance": 37991.14, "open_balance": 38793.78}, {"date": "2022-10-07", "days": 30, "payment": 1000.0, "interest": 187.04, "principal": 812.96, "balance": 37178.18, "open_balance": 37991.14}, {"date": "2022-11-07", "days": 31, "payment": 1000.0, "interest": 189.14, "principal": 810.86, "balance": 36367.33, "open_balance": 37178.18}, {"date": "2022-12-07", "days": 30, "payment": 1000.0, "interest": 179.05, "principal": 820.95, "balance": 35546.37, "open_balance": 36367.33}, {"date": "2023-01-07", "days": 31, "payment": 1000.0, "interest": 180.84, "principal": 819.16, "balance": 34727.21, "open_balance": 35546.37}, {"date": "2023-02-07", "days": 31, "payment": 1000.0, "interest": 176.67, "principal": 823.33, "balance": 33903.88, "open_balance": 34727.21}, {"date": "2023-03-07", "days": 28, "payment": 1000.0, "interest": 155.79, "principal": 844.21, "balance": 33059.67, "open_balance": 33903.88}, {"date": "2023-04-07", "days": 31, "payment": 1000.0, "interest": 168.19, "principal": 831.81, "balance": 32227.86, "open_balance": 33059.67}, {"date": "2023-05-07", "days": 30, "payment": 1000.0, "interest": 158.67, "principal": 841.33, "balance": 31386.53, "open_balance": 32227.86}, {"date": "2023-06-07", "days": 31, "payment": 1000.0, "interest": 159.68, "principal": 840.32, "balance": 30546.2, "open_balance": 31386.53}, {"date": "2023-07-07", "days": 30, "payment": 1000.0, "interest": 150.39, "principal": 849.61, "balance": 29696.59, "open_balance": 30546.2}, {"date": "2023-08-07", "days": 31, "payment": 1000.0, "interest": 151.08, "principal": 848.92, "balance": 28847.67, "open_balance": 29696.59}, {"date": "2023-09-07", "days": 31, "payment": 1000.0, "interest": 146.76, "principal": 853.24, "balance": 27994.43, "open_balance": 28847.67}, {"date": "2023-10-07", "days": 30, "payment": 1000.0, "interest": 137.82, "principal": 862.18, "balance": 27132.25, "open_balance": 27994.43}, {"date": "2023-11-07", "days": 31, "payment": 1000.0, "interest": 138.03, "principal": 861.97, "balance": 26270.29, "open_balance": 27132.25}, {"date": "2023-12-07", "days": 30, "payment": 1000.0, "interest": 129.34, "principal": 870.66, "balance": 25399.62, "open_balance": 26270.29}, {"date": "2024-01-07", "days": 31, "payment": 1000.0, "interest": 129.22, "principal": 870.78, "balance": 24528.84, "open_balance": 25399.62}, {"date": "2024-02-07", "days": 31, "payment": 1000.0, "interest": 124.79, "principal": 875.21, "balance": 23653.63, "open_balance": 24528.84}, {"date": "2024-03-07", "days": 29, "payment": 1000.0, "interest": 112.57, "principal": 887.43, "balance": 22766.2, "open_balance": 23653.63}, {"date": "2024-04-07", "days": 31, "payment": 1000.0, "interest": 115.82, "principal": 884.18, "balance": 21882.02, "open_balance": 22766.2}, {"date": "2024-05-07", "days": 30, "payment": 1000.0, "interest": 107.73, "principal": 892.27, "balance": 20989.75, "open_balance": 21882.02}, {"date": "2024-06-07", "days": 31, "payment": 1000.0, "interest": 106.78, "principal": 893.22, "balance": 20096.53, "open_balance": 20989.75}, {"date": "2024-07-07", "days": 30, "payment": 1000.0, "interest": 98.94, "principal": 901.06, "balance": 19195.48, "open_balance": 20096.53}, {"date": "2024-08-07", "days": 31, "payment": 1000.0, "interest": 97.66, "principal": 902.34, "balance": 18293.13, "open_balance": 19195.48}, {"date": "2024-09-07", "days": 31, "payment": 1000.0, "interest": 93.06, "principal": 906.94, "balance": 17386.2, "open_balance": 18293.13}, {"date": "2024-10-07", "days": 30, "payment": 1000.0, "interest": 85.6, "principal": 914.4, "balance": 16471.79, "open_balance": 17386.2}, {"date": "2024-11-07", "days": 31, "payment": 1000.0, "interest": 83.8, "principal": 916.2, "balance": 15555.59, "open_balance": 16471.79}, {"date": "2024-12-07", "days": 30, "payment": 1000.0, "interest": 76.58, "principal": 923.42, "balance": 14632.18, "open_balance": 15555.59}, {"date": "2025-01-07", "days": 31, "payment": 1000.0, "interest": 74.44, "principal": 925.56, "balance": 13706.62, "open_balance": 14632.18}, {"date": "2025-02-07", "days": 31, "payment": 1000.0, "interest": 69.73, "principal": 930.27, "balance": 12776.35, "open_balance": 13706.62}, {"date": "2025-03-07", "days": 28, "payment": 1000.0, "interest": 58.71, "principal": 941.29, "balance": 11835.05, "open_balance": 12776.35}, {"date": "2025-04-07", "days": 31, "payment": 1000.0, "interest": 60.21, "principal": 939.79, "balance": 10895.26, "open_balance": 11835.05}, {"date": "2025-05-07", "days": 30, "payment": 1000.0, "interest": 53.64, "principal": 946.36, "balance": 9948.9, "open_balance": 10895.26}, {"date": "2025-06-07", "days": 31, "payment": 1000.0, "interest": 50.61, "principal": 949.39, "balance": 8999.52, "open_balance": 9948.9}, {"date": "2025-07-07", "days": 30, "payment": 1000.0, "interest": 44.31, "principal": 955.69, "balance": 8043.83, "open_balance": 8999.52}, {"date": "2025-08-07", "days": 31, "payment": 1000.0, "interest": 40.92, "principal": 959.08, "balance": 7084.75, "open_balance": 8043.83}, {"date": "2025-09-07", "days": 31, "payment": 1000.0, "interest": 36.04, "principal": 963.96, "balance": 6120.79, "open_balance": 7084.75}, {"date": "2025-10-07", "days": 30, "payment": 1000.0, "interest": 30.13, "principal": 969.87, "balance": 5150.93, "open_balance": 6120.79}, {"date": "2025-11-07", "days": 31, "payment": 1000.0, "interest": 26.2, "principal": 973.8, "balance": 4177.13, "open_balance": 5150.93}, {"date": "2025-12-07", "days": 30, "payment": 1000.0, "interest": 20.57, "principal": 979.43, "balance": 3197.7, "open_balance": 4177.13}, {"date": "2026-01-07", "days": 31, "payment": 1000.0, "interest": 16.27, "principal": 983.73, "balance": 2213.96, "open_balance": 3197.7}, {"date": "2026-02-07", "days": 31, "payment": 1000.0, "interest": 11.26, "principal": 988.74, "balance": 1225.23, "open_balance": 2213.96}, {"date": "2026-03-16", "days": 37, "payment": 1225.22, "interest": 7.44, "principal": 1217.78, "balance": 7.45, "open_balance": 1225.23}, {"date": "2026-03-17", "days": 1, "payment": 7.44, "interest": 0.0, "principal": 7.44, "balance": 0.01, "open_balance": 7.45}]};
+const S = D.schedule, f = n => '$' + n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const f0 = n => '$' + Math.round(n).toLocaleString('en-US');
+Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+Chart.defaults.font.size=11;
+
+const PALETTE = {
+ light:{red:'#D10A1E',grn:'#1a7f37',amb:'#9a6700',blu:'#0969da',text:'#6b7280',grid:'rgba(227,230,235,.9)',
+  cardBg:'#ffffff',tipBorder:'#e3e6eb',tipText:'#1a1f26',titleText:'#1a1f26'},
+ dark:{red:'#EB0A1E',grn:'#2ea043',amb:'#d29922',blu:'#58a6ff',text:'#8b949e',grid:'rgba(42,50,64,.55)',
+  cardBg:'#161b22',tipBorder:'#2a3240',tipText:'#e6edf3',titleText:'#e6edf3'}
+};
+function currentTheme(){ return document.documentElement.getAttribute('data-theme')==='dark' ? 'dark' : 'light'; }
+
+const lbl = S.map(r=>{const d=new Date(r.date+'T00:00');return d.toLocaleDateString('en-US',{month:'short',year:'2-digit'})});
+let cum=0; const cumA=S.map(r=>cum+=r.payment);
+const years={}; S.forEach(r=>{const y=r.date.slice(0,4);(years[y]=years[y]||{p:0,i:0,pr:0,n:0});
+years[y].p+=r.payment;years[y].i+=r.interest;years[y].pr+=r.principal;years[y].n++});
+const yk=Object.keys(years).sort();
+
+// year table
+document.getElementById('ytb').innerHTML = yk.map(y=>{const a=years[y];
+return `<tr><td><b>${y}</b></td><td>${a.n}</td><td>${f(a.p)}</td><td class="warn">${f(a.i)}</td><td>${f(a.pr)}</td><td>${(a.i/a.p*100).toFixed(1)}%</td></tr>`}).join('')
++ `<tr class="tot"><td>Total</td><td>58</td><td>${f(D.actual.total_paid)}</td><td class="warn">${f(D.actual.interest_paid)}</td><td>${f(D.actual.principal_paid)}</td><td>13.3%</td></tr>`;
+
+// ledger
+document.getElementById('ltb').innerHTML = S.map((r,i)=>{
+const d=new Date(r.date+'T00:00').toLocaleDateString('en-US',{month:'short',day:'2-digit',year:'numeric'});
+return `<tr><td>${i+1}</td><td>${d}</td><td>${r.days}</td><td>${f(r.payment)}</td><td class="warn">${f(r.interest)}</td><td class="pos">${f(r.principal)}</td><td>${f(r.balance)}</td></tr>`}).join('');
+
+function buildViews(P){
+ return {
+  bal:{type:'line',data:{labels:lbl,datasets:[{label:'Outstanding balance',data:S.map(r=>r.balance),
+    borderColor:P.red,backgroundColor:P.red+'1A',fill:true,tension:.25,pointRadius:0,
+    pointHoverRadius:5,borderWidth:2.5}]},
+   opts:{scales:{y:{ticks:{callback:v=>f0(v)}}}}},
+  split:{type:'bar',data:{labels:lbl,datasets:[
+    {label:'Principal',data:S.map(r=>r.principal),backgroundColor:P.grn,stack:'a'},
+    {label:'Interest',data:S.map(r=>r.interest),backgroundColor:P.amb,stack:'a'}]},
+   opts:{scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>'$'+v}}}}},
+  cum:{type:'line',data:{labels:lbl,datasets:[
+    {label:'Cumulative payments',data:cumA,borderColor:P.blu,backgroundColor:P.blu+'1A',
+     fill:true,tension:.2,pointRadius:0,pointHoverRadius:5,borderWidth:2.5},
+    {label:'Cumulative interest',data:(()=>{let c=0;return S.map(r=>c+=r.interest)})(),
+     borderColor:P.amb,backgroundColor:P.amb+'1F',fill:true,tension:.2,pointRadius:0,borderWidth:2.5}]},
+   opts:{scales:{y:{ticks:{callback:v=>f0(v)}}}}},
+  year:{type:'bar',data:{labels:yk,datasets:[
+    {label:'Principal',data:yk.map(y=>years[y].pr),backgroundColor:P.grn,stack:'a'},
+    {label:'Interest',data:yk.map(y=>years[y].i),backgroundColor:P.amb,stack:'a'}]},
+   opts:{scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>f0(v)}}}}}
+ };
+}
+
+let chart, mixChart, activeView='bal';
+function tipFor(P){ return {backgroundColor:P.cardBg,borderColor:P.tipBorder,borderWidth:1,titleColor:P.tipText,
+ bodyColor:P.tipText,padding:10,cornerRadius:7,displayColors:true,boxPadding:4,titleFont:{weight:'600'}}; }
+
+function draw(v){
+ activeView=v;
+ const P=PALETTE[currentTheme()], views=buildViews(P), cfg=views[v];
+ if(chart) chart.destroy();
+ chart=new Chart(document.getElementById('main'),{type:cfg.type,data:cfg.data,
+  options:Object.assign({responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+   plugins:{legend:{display:cfg.data.datasets.length>1,labels:{color:P.text,usePointStyle:true,pointStyle:'rectRounded',padding:16}},
+    tooltip:Object.assign({},tipFor(P),{callbacks:{label:c=>c.dataset.label+': '+f(c.parsed.y)}})},
+   scales:{x:{grid:{display:false},ticks:{color:P.text,maxRotation:0,autoSkipPadding:22}},y:{grid:{color:P.grid},ticks:{color:P.text}}}},cfg.opts,
+   {scales:Object.assign({x:{grid:{display:false},ticks:{color:P.text,maxRotation:0,autoSkipPadding:22}},y:{grid:{color:P.grid},ticks:{color:P.text}}},cfg.opts.scales)})});
+}
+draw('bal');
+document.querySelectorAll('.ctl button').forEach(b=>b.onclick=()=>{
+ document.querySelectorAll('.ctl button').forEach(x=>x.classList.remove('on'));
+ b.classList.add('on'); draw(b.dataset.v);});
+
+function drawMix(){
+ const P=PALETTE[currentTheme()];
+ if(mixChart) mixChart.destroy();
+ mixChart=new Chart(document.getElementById('mix'),{type:'doughnut',
+  data:{labels:['Principal (amount financed)','Interest','Down payment'],
+   datasets:[{data:[49636.45,7596.21,4000],backgroundColor:[P.red,P.amb,'#8a94a3'],
+    borderColor:P.cardBg,borderWidth:3,hoverOffset:8}]},
+  options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
+   plugins:{legend:{position:'bottom',labels:{color:P.text,usePointStyle:true,pointStyle:'circle',padding:14,boxWidth:8}},
+    title:{display:true,text:'Total cost breakdown — $61,232.66',color:P.titleText,font:{size:13,weight:'600'},padding:{bottom:10}},
+    tooltip:Object.assign({},tipFor(P),{callbacks:{label:c=>c.label+': '+f(c.parsed)+'  ('+(c.parsed/61232.66*100).toFixed(1)+'%)'}})}}});
+}
+drawMix();
+
+function toggleTheme(){
+ const isDark = document.documentElement.getAttribute('data-theme')==='dark';
+ const next = isDark ? 'light' : 'dark';
+ if(next==='dark') document.documentElement.setAttribute('data-theme','dark');
+ else document.documentElement.removeAttribute('data-theme');
+ document.getElementById('themeLabel').textContent = next==='dark' ? 'Light mode' : 'Dark mode';
+ document.getElementById('themeToggle').firstChild.textContent = next==='dark' ? '☀ ' : '☽ ';
+ try{ localStorage.setItem('4runner-theme', next); }catch(e){}
+ draw(activeView); drawMix();
+}
+(function initToggleLabel(){
+ const dark = document.documentElement.getAttribute('data-theme')==='dark';
+ document.getElementById('themeLabel').textContent = dark ? 'Light mode' : 'Dark mode';
+ document.getElementById('themeToggle').firstChild.textContent = dark ? '☀ ' : '☽ ';
+})();
+</script></body></html>
